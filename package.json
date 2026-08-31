@@ -1,0 +1,9 @@
+{
+  "name": "litvm-wallet-checker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wallet activity checker & leaderboard percentile for the LitVM (LiteForge) testnet",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
