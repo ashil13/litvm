@@ -1,0 +1,20 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Runs a small batch of the crawl every 5 minutes; leaderboard-refresh.js
+# resumes from where the previous run left off and only publishes a new
+# leaderboard once a full pass over all wallets completes.
+[functions."leaderboard-refresh"]
+  schedule = "*/5 * * * *"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
