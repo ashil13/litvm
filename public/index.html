@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LitVM Wallet Ledger — چک‌کردن آمار والت تستنت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0F1B2D;
+    --bg-raised: #142338;
+    --panel: #16263D;
+    --ink: #EAF0F6;
+    --ink-dim: #8FA3B8;
+    --line: #2A3C55;
+    --silver: #9FB4C7;
+    --amber: #F2A65A;
+    --amber-dim: #7A5730;
+    --good: #6FCF97;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #1B2F4A 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #17283F 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:48px 20px 80px;
+  }
+  .wrap{ width:100%; max-width:560px; }
+
+  .kicker{
+    color:var(--silver);
+    font-size:14px;
+    margin:0 0 6px;
+    letter-spacing:0.01em;
+  }
+  h1{
+    font-size:28px;
+    line-height:1.3;
+    margin:0 0 8px;
+    font-weight:600;
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:15px;
+    line-height:1.7;
+    margin:0 0 32px;
+  }
+  .sub b{ color:var(--ink); font-weight:600; }
+
+  .ticket{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+
+  .search-row{
+    display:flex;
+    gap:10px;
+    padding:20px;
+    border-bottom:1px dashed var(--line);
+  }
+  input[type=text]{
+    flex:1;
+    background:var(--bg);
+    border:1px solid var(--line);
+    color:var(--ink);
+    border-radius:8px;
+    padding:13px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    direction:ltr;
+    text-align:left;
+  }
+  input[type=text]::placeholder{ color:#4E6580; }
+  input[type=text]:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+
+  button{
+    background:var(--amber);
+    color:#26160A;
+    border:none;
+    border-radius:8px;
+    padding:0 22px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:disabled{ opacity:0.55; cursor:default; }
+
+  .status{
+    padding:16px 20px;
+    color:var(--ink-dim);
+    font-size:14px;
+    display:none;
+  }
+  .status.show{ display:block; }
+  .status.err{ color:#E58989; }
+
+  .result{ display:none; }
+  .result.show{ display:block; }
+
+  .bib{
+    text-align:center;
+    padding:36px 20px 28px;
+    border-bottom:1px dashed var(--line);
+    position:relative;
+  }
+  .bib::before, .bib::after{
+    content:"";
+    position:absolute;
+    bottom:-9px;
+    width:18px; height:18px;
+    background:var(--bg);
+    border-radius:50%;
+  }
+  .bib::before{ left:-9px; }
+  .bib::after{ right:-9px; }
+
+  .bib-label{ color:var(--ink-dim); font-size:13px; margin:0 0 10px; }
+  .bib-num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:56px;
+    font-weight:700;
+    color:var(--amber);
+    line-height:1;
+    direction:ltr;
+  }
+  .bib-num sup{ font-size:24px; font-weight:600; }
+  .bib-note{ color:var(--ink-dim); font-size:13.5px; margin-top:10px; direction:rtl; }
+
+  .rows{ padding:22px 22px 6px; }
+  .row{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+  }
+  .row:last-child{ border-bottom:none; }
+  .row .label{ color:var(--ink-dim); white-space:nowrap; }
+  .row .leader{
+    flex:1;
+    border-bottom:1px dotted #33475F;
+    margin-bottom:4px;
+    min-width:12px;
+  }
+  .row .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    white-space:nowrap;
+    direction:ltr;
+  }
+  .row .value.dim{ color:var(--ink-dim); font-weight:400; font-size:13px; }
+
+  .footnote{
+    padding:16px 22px 22px;
+    color:var(--ink-dim);
+    font-size:12.5px;
+    line-height:1.8;
+  }
+  .footnote code{
+    background:var(--bg);
+    padding:1px 5px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">LitVM Testnet · Chain ID 4441</p>
+  <h1>دفترچه فعالیت والت</h1>
+  <p class="sub">آدرس والتت رو بذار، فعالیتت روی <b>تستنت LitVM (LiteForge)</b> رو می‌کشیم بیرون و نشونت می‌دیم جزو تاپ چند درصد از کل والت‌ها هستی.</p>
+
+  <div class="ticket">
+    <div class="search-row">
+      <input type="text" id="addr" placeholder="0x..." autocomplete="off" spellcheck="false">
+      <button id="go">چک کن</button>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="result" id="result">
+      <div class="bib">
+        <p class="bib-label">رتبه بین والت‌ها</p>
+        <div class="bib-num" id="bibNum">—</div>
+        <p class="bib-note" id="bibNote"></p>
+      </div>
+      <div class="rows" id="rows"></div>
+      <div class="footnote" id="footnote"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+const resultEl = $('result');
+const bibNum = $('bibNum');
+const bibNote = $('bibNote');
+const rowsEl = $('rows');
+const footnoteEl = $('footnote');
+
+function setStatus(msg, isErr){
+  statusEl.textContent = msg;
+  statusEl.className = 'status show' + (isErr ? ' err' : '');
+}
+function clearStatus(){
+  statusEl.className = 'status';
+}
+
+function fmt(n){
+  if (n === null || n === undefined) return '—';
+  return Number(n).toLocaleString('en-US');
+}
+
+function row(label, value, dim){
+  const r = document.createElement('div');
+  r.className = 'row';
+  r.innerHTML = `<span class="label">${label}</span><span class="leader"></span><span class="value${dim ? ' dim' : ''}">${value}</span>`;
+  rowsEl.appendChild(r);
+}
+
+async function check(){
+  const address = $('addr').value.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(address)){
+    setStatus('یه آدرس والت معتبر (0x...) وارد کن.', true);
+    return;
+  }
+  clearStatus();
+  resultEl.className = 'result';
+  $('go').disabled = true;
+  setStatus('در حال گرفتن اطلاعات از اکسپلورر LitVM…', false);
+
+  try{
+    const [statsRes, pctRes] = await Promise.all([
+      fetch(`/api/wallet-stats?address=${address}`).then(r => r.json()),
+      fetch(`/api/percentile?address=${address}`).then(r => r.json()),
+    ]);
+
+    if(statsRes.error){ throw new Error(statsRes.error); }
+    if(!statsRes.found){
+      setStatus(statsRes.message || 'فعالیتی برای این والت پیدا نشد.', false);
+      $('go').disabled = false;
+      return;
+    }
+
+    // Bib / rank hero
+    if(pctRes.ready && pctRes.found){
+      bibNum.innerHTML = `تاپ ${pctRes.topPercent}<sup>%</sup>`;
+      bibNote.textContent = `رتبه ${fmt(pctRes.rank)} از ${fmt(pctRes.walletCount)} والت (بر اساس تعداد تراکنش)`;
+    } else if(pctRes.ready && !pctRes.found){
+      bibNum.textContent = '—';
+      bibNote.textContent = 'این والت هنوز توی اسنپ‌شات لیدربورد نیست (به‌زودی آپدیت میشه).';
+    } else {
+      bibNum.textContent = '—';
+      bibNote.textContent = pctRes.message || 'لیدربورد هنوز آماده نشده.';
+    }
+
+    // Stat rows
+    rowsEl.innerHTML = '';
+    row('تعداد کل تراکنش‌ها', fmt(statsRes.transactionsCount));
+    row('دیپلوی کانترکت', fmt(statsRes.contractDeployments));
+    row('انتقال NFT (ERC-721/1155)', fmt(statsRes.nftTransfersCount));
+    row('تعداد کانترکت‌های NFT متفاوت', fmt(statsRes.uniqueNftContracts));
+    if(statsRes.swapsAreApproximate){
+      row('انتقال توکن (ERC-20)', fmt(statsRes.erc20TransferCountApprox), true);
+    } else {
+      row('سواپ (تشخیص از روی روتر DEX)', fmt(statsRes.swaps));
+    }
+    row('موجودی zkLTC', statsRes.coinBalance ? (Number(statsRes.coinBalance)/1e18).toFixed(4) : '0', true);
+
+    let fn = '';
+    if(statsRes.partial){
+      fn += '⚠️ بعضی از بخش‌های آمار این والت (احتمالاً به‌خاطر تغییر فرمت API اکسپلورر) لود نشدن و فعلاً صفر نشون داده می‌شن. ';
+    }
+    if(statsRes.swapsAreApproximate){
+      fn += 'عدد سواپ دقیق نیست — چون آدرس روتر DEX تعریف نشده، به‌جاش تعداد انتقال توکن‌های ERC-20 نشون داده شده. ';
+    }
+    if(pctRes.generatedAt){
+      fn += `آخرین آپدیت لیدربورد: ${new Date(pctRes.generatedAt).toLocaleString('fa-IR')}`;
+      if(pctRes.snapshotComplete === false) fn += ' (اسنپ‌شات کامل نشده بود، دور بعد کامل‌تر میشه)';
+    }
+    footnoteEl.textContent = fn;
+
+    resultEl.className = 'result show';
+    clearStatus();
+  } catch(err){
+    setStatus('خطا: ' + err.message, true);
+  } finally {
+    $('go').disabled = false;
+  }
+}
+
+$('go').addEventListener('click', check);
+$('addr').addEventListener('keydown', (e) => { if(e.key === 'Enter') check(); });
+</script>
+</body>
+</html>
